@@ -1,7 +1,11 @@
 const express = require('express');
+const path = require('path');
 const app = express();
 
 const PORT = process.env.PORT || 3000;
+
+// Serve static files (index.html, style.css, script.js) from the repo root
+app.use(express.static(path.join(__dirname)));
 
 // Simple cache for /price to reduce API calls (30 seconds)
 let cache = { value: null, ts: 0, ttl: 30_000 };
@@ -75,9 +79,9 @@ app.get('/history', async (req, res) => {
   }
 });
 
-// Root help
+// Optional: root explicitly serves index.html (helps if someone visits `/`)
 app.get('/', (req, res) => {
-  res.send('Bitcoin API (CoinGecko): /price (USD/GBP/EUR), /history (last 30 days USD), /health');
+  res.sendFile(path.join(__dirname, 'index.html'));
 });
 
 app.listen(PORT, '0.0.0.0', () => {
