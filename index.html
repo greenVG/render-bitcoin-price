@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Bitcoin Price Index</title>
+  <link rel="stylesheet" href="style.css" />
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <div class="bpi-container">
+    <h2>Bitcoin Price (Live) — USD</h2>
+    <p id="meta"></p>
+
+    <div class="controls">
+      <button id="btn-live">Load live price</button>
+      <button id="btn-30d">Load last 30 days</button>
+    </div>
+
+    <canvas id="bpiChart"></canvas>
+
+    <table class="bpi-table">
+      <thead>
+        <tr><th>Date/Time</th><th>Price</th></tr>
+      </thead>
+      <tbody id="bpi-body"></tbody>
+    </table>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
+
