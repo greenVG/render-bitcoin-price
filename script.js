@@ -98,21 +98,24 @@ async function loadLivePrice() {
 async function loadLast30Days() {
   const meta = document.getElementById('meta');
   try {
-    const res = await fetch('https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=usd&days=30');
+    const res = await fetch(
+      'https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=usd&days=30&interval=hourly'
+    );
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
 
-    // Format each timestamp with full date + time
-    const labels = data.prices.map(([ts]) => new Date(ts).toLocaleString('en-US', { 
-      year: 'numeric', month: '2-digit', day: '2-digit',
-      hour: '2-digit', minute: '2-digit', second: '2-digit'
-    }));
+    const labels = data.prices.map(([ts]) =>
+      new Date(ts).toLocaleString('en-US', {
+        year: 'numeric', month: '2-digit', day: '2-digit',
+        hour: '2-digit', minute: '2-digit'
+      })
+    );
     const prices = data.prices.map(([, price]) => price);
 
     const rows = data.prices.map(([ts, price]) => ({
-      label: new Date(ts).toLocaleString('en-US', { 
+      label: new Date(ts).toLocaleString('en-US', {
         year: 'numeric', month: '2-digit', day: '2-digit',
-        hour: '2-digit', minute: '2-digit', second: '2-digit'
+        hour: '2-digit', minute: '2-digit'
       }),
       price
     }));
@@ -122,7 +125,7 @@ async function loadLast30Days() {
     meta.textContent = `Source: CoinGecko | Range: ${start} – ${end} | USD`;
 
     renderTable(rows);
-    renderChart(labels, prices, 'BTC Price (USD) — Last 30 Days');
+    renderChart(labels, prices, 'BTC Price (USD) — Last 30 Days (Hourly)');
   } catch (e) {
     console.error('Failed to load 30-day history:', e);
     meta.textContent = 'Error loading history.';
