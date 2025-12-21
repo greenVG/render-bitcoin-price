@@ -53,3 +53,49 @@ canvas { margin: 20px 0; }
 .price-up { color: #0a8f3b; font-weight: bold; }
 .price-down { color: #d13c3c; font-weight: bold; }
 
+		
+#auxiliary-info {
+    /* Style and Color */
+    background-color: #28a745; /* Green background */
+    color: yellow; /* Yellow text color */
+    padding: 10px 20px;
+    font-family: Arial, sans-serif;
+    font-size: 0.9rem;
+    text-align: center;
+    
+    /* Fixed Positioning */
+    position: fixed; /* Makes it stay in place when scrolling */
+    bottom: 0;      /* Aligns it to the bottom of the viewport */
+    left: 0;        /* Starts from the left edge */
+    width: 100%;    /* Stretches across the entire width */
+    z-index: 1000;  /* Ensures it stays above other content */
+    
+    /* Layout */
+    box-sizing: border-box;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    overflow-y: auto;
+    overflow-x: auto;
+}
+
+#auxiliary-info a {
+    color: gold; /* Link color */
+    text-decoration: none;
+}
+
+#auxiliary-info a:hover {
+    text-decoration: underline;
+}
+
+/* Responsive adjustment for smaller screens */
+@media (max-width: 700px) {
+    #auxiliary-info {
+        font-size: 0.8rem;
+        padding: 8px 10px;
+        flex-direction: column; /* Stacks items vertically on small screens */
+        text-align: center;
+    }
+}		
+
