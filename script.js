@@ -10,7 +10,7 @@ function renderTable(rows) {
 
     const tdDate = document.createElement('td');
     tdDate.className = 'date-cell';
-    tdDate.textContent = label;
+    tdDate.textContent = label; // now includes date + time
 
     const tdPrice = document.createElement('td');
     tdPrice.textContent = Number(price).toLocaleString('en-US', { style: 'currency', currency: 'USD' });
@@ -81,7 +81,7 @@ async function loadLivePrice() {
     renderTable([{ label: now.toLocaleString(), price }]);
 
     // Chart: single point
-    renderChart([now.toLocaleTimeString()], [price], 'BTC Price (USD) — Live');
+    renderChart([now.toLocaleString()], [price], 'BTC Price (USD) — Live');
 
   } catch (e) {
     console.error('Failed to load live price:', e);
@@ -97,12 +97,12 @@ async function loadLast30Days() {
     const data = await res.json();
 
     // data.prices is [[timestampMs, price], ...]
-    const labels = data.prices.map(([ts]) => new Date(ts).toISOString().slice(0, 10));
+    const labels = data.prices.map(([ts]) => new Date(ts).toLocaleString());
     const prices = data.prices.map(([, price]) => price);
 
-    // Build table rows (daily date labels)
+    // Build table rows (date + time labels)
     const rows = data.prices.map(([ts, price]) => ({
-      label: new Date(ts).toISOString().slice(0, 10),
+      label: new Date(ts).toLocaleString(),
       price
     }));
 
