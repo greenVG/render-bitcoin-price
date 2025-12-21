@@ -1,5 +1,12 @@
 let chart; // keep reference to the chart to update/replace
 
+function formatDateTime(ts) {
+  const d = new Date(ts);
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} `
+       + `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+}
+
 function renderTable(rows) {
   const tbody = document.getElementById('bpi-body');
   tbody.innerHTML = '';
@@ -10,7 +17,7 @@ function renderTable(rows) {
 
     const tdDate = document.createElement('td');
     tdDate.className = 'date-cell';
-    tdDate.textContent = label; // now includes date + time
+    tdDate.textContent = label;
 
     const tdPrice = document.createElement('td');
     tdPrice.textContent = Number(price).toLocaleString('en-US', { style: 'currency', currency: 'USD' });
@@ -74,19 +81,11 @@ async function loadLivePrice() {
 
     const price = data.bitcoin.usd;
     const now = new Date();
-
-    // Force full date + time
-    const formatted = now.toLocaleString('en-US', { 
-      year: 'numeric', month: '2-digit', day: '2-digit',
-      hour: '2-digit', minute: '2-digit', second: '2-digit'
-    });
+    const formatted = formatDateTime(now);
 
     meta.textContent = `Source: CoinGecko | Live at ${formatted} | USD`;
 
-    // Table: single row
     renderTable([{ label: formatted, price }]);
-
-    // Chart: single point
     renderChart([formatted], [price], 'BTC Price (USD) — Live');
 
   } catch (e) {
@@ -104,19 +103,11 @@ async function loadLast30Days() {
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
 
-    const labels = data.prices.map(([ts]) =>
-      new Date(ts).toLocaleString('en-US', {
-        year: 'numeric', month: '2-digit', day: '2-digit',
-        hour: '2-digit', minute: '2-digit'
-      })
-    );
+    const labels = data.prices.map(([ts]) => formatDateTime(ts));
     const prices = data.prices.map(([, price]) => price);
 
     const rows = data.prices.map(([ts, price]) => ({
-      label: new Date(ts).toLocaleString('en-US', {
-        year: 'numeric', month: '2-digit', day: '2-digit',
-        hour: '2-digit', minute: '2-digit'
-      }),
+      label: formatDateTime(ts),
       price
     }));
 
