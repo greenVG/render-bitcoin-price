@@ -75,13 +75,19 @@ async function loadLivePrice() {
     const price = data.bitcoin.usd;
     const now = new Date();
 
-    meta.textContent = `Source: CoinGecko | Live at ${now.toLocaleString()} | USD`;
+    // Force full date + time
+    const formatted = now.toLocaleString('en-US', { 
+      year: 'numeric', month: '2-digit', day: '2-digit',
+      hour: '2-digit', minute: '2-digit', second: '2-digit'
+    });
+
+    meta.textContent = `Source: CoinGecko | Live at ${formatted} | USD`;
 
     // Table: single row
-    renderTable([{ label: now.toLocaleString(), price }]);
+    renderTable([{ label: formatted, price }]);
 
     // Chart: single point
-    renderChart([now.toLocaleString()], [price], 'BTC Price (USD) — Live');
+    renderChart([formatted], [price], 'BTC Price (USD) — Live');
 
   } catch (e) {
     console.error('Failed to load live price:', e);
@@ -96,13 +102,18 @@ async function loadLast30Days() {
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
 
-    // data.prices is [[timestampMs, price], ...]
-    const labels = data.prices.map(([ts]) => new Date(ts).toLocaleString());
+    // Format each timestamp with full date + time
+    const labels = data.prices.map(([ts]) => new Date(ts).toLocaleString('en-US', { 
+      year: 'numeric', month: '2-digit', day: '2-digit',
+      hour: '2-digit', minute: '2-digit', second: '2-digit'
+    }));
     const prices = data.prices.map(([, price]) => price);
 
-    // Build table rows (date + time labels)
     const rows = data.prices.map(([ts, price]) => ({
-      label: new Date(ts).toLocaleString(),
+      label: new Date(ts).toLocaleString('en-US', { 
+        year: 'numeric', month: '2-digit', day: '2-digit',
+        hour: '2-digit', minute: '2-digit', second: '2-digit'
+      }),
       price
     }));
 
