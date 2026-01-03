@@ -53,10 +53,17 @@ function renderChart(labels, prices, chartLabel, isShortFormat = false) {
     return;
   }
   
+  // Make chart taller for 30-day view to accommodate all labels
+  if (isShortFormat) {
+    canvas.style.height = '500px';
+  } else {
+    canvas.style.height = '400px';
+  }
+  
   const ctx = canvas.getContext('2d');
   if (chart) chart.destroy();
 
-  // For 30-day chart, use shorter labels to avoid crowding
+  // For 30-day chart, use shorter labels
   const displayLabels = isShortFormat 
     ? labels.map(ts => formatDateShort(new Date(ts)))
     : labels;
@@ -86,6 +93,14 @@ function renderChart(labels, prices, chartLabel, isShortFormat = false) {
     options: {
       responsive: true,
       maintainAspectRatio: false,
+      layout: {
+        padding: {
+          left: 20,
+          right: 20,
+          top: 20,
+          bottom: 20
+        }
+      },
       interaction: {
         mode: 'index',
         intersect: false
@@ -121,7 +136,6 @@ function renderChart(labels, prices, chartLabel, isShortFormat = false) {
           borderWidth: 2,
           callbacks: {
             title: (tooltipItems) => {
-              // Show full date in tooltip even if X-axis uses short format
               if (isShortFormat) {
                 return formatDateTime(labels[tooltipItems[0].dataIndex]);
               }
@@ -143,26 +157,26 @@ function renderChart(labels, prices, chartLabel, isShortFormat = false) {
         x: { 
           title: { 
             display: true, 
-            text: 'Date',
+            text: isShortFormat ? 'Date (MM/DD)' : 'Date/Time',
             font: {
-              size: 18,
+              size: 20,
               weight: 'bold'
             },
             color: '#000',
-            padding: 15
+            padding: { top: 20, bottom: 10 }
           },
           ticks: {
             font: {
               size: 16,
               weight: 'bold'
             },
+            minRotation: 0,
+            maxRotation: 0,
             color: '#000',
-            maxRotation: 45,
-            minRotation: 45,
             autoSkip: true,
-            autoSkipPadding: 20,
-            maxTicksLimit: isShortFormat ? 10 : 15,
-            padding: 8
+            autoSkipPadding: 30,
+            maxTicksLimit: isShortFormat ? 8 : 15,
+            padding: 10
           },
           grid: {
             display: true,
@@ -175,19 +189,21 @@ function renderChart(labels, prices, chartLabel, isShortFormat = false) {
             display: true, 
             text: 'Price (USD)',
             font: {
+              size: 20,
+              weight: 'bold'
+            },
+            color: '#000',
+            padding: { left: 10, right: 20 }
+          },
+          ticks: {
+            font: {
               size: 18,
               weight: 'bold'
             },
             color: '#000',
-            padding: 15
-          },
-          ticks: {
-            font: {
-              size: 16,
-              weight: 'bold'
-            },
-            color: '#000',
-            padding: 10,
+            padding: 15,
+            stepSize: undefined,
+            count: 8,
             callback: function(value) {
               return '$' + value.toLocaleString('en-US', {
                 minimumFractionDigits: 0,
@@ -251,7 +267,6 @@ async function loadLast30Days() {
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
 
-    // Keep original timestamps for tooltip
     const timestamps = data.prices.map(([ts]) => ts);
     const labels = data.prices.map(([ts]) => formatDateTime(ts));
     const prices = data.prices.map(([, price]) => price);
@@ -266,7 +281,6 @@ async function loadLast30Days() {
     meta.textContent = `Source: CoinGecko | Range: ${start} — ${end} | USD`;
 
     renderTable(rows);
-    // Pass timestamps and set isShortFormat to true for 30-day chart
     renderChart(timestamps, prices, 'BTC Price (USD) — Last 30 Days', true);
   } catch (e) {
     console.error('Failed to load 30-day history:', e);
