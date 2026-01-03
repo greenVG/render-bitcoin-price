@@ -10,12 +10,12 @@ app.use(express.static(path.join(__dirname)));
 // Simple cache for /price to reduce API calls (30 seconds)
 let cache = { value: null, ts: 0, ttl: 30_000 };
 
-// Health endpoint
+// Health endpoint (for you and Render)
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', uptime: process.uptime() });
 });
 
-// Live price route
+// Live price with metadata (USD, GBP, EUR) using CoinGecko
 app.get('/price', async (req, res) => {
   try {
     const now = Date.now();
@@ -47,24 +47,30 @@ app.get('/price', async (req, res) => {
   }
 });
 
-// History route updated to show hours and minutes
+// Optional: last 30 days of USD close prices using CoinGecko
 app.get('/history', async (req, res) => {
   try {
-    const url = `https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=usd&days=30&interval=hourly`;
+    const today = new Date();
+    const end = today.toISOString().slice(0, 10);
+    const startDate = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000)
+      .toISOString()
+      .slice(0, 10);
+
+    const url = `https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=usd&days=30`;
     const response = await fetch(url);
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     const data = await response.json();
 
-    // Mapping to include hours and minutes
+    // CoinGecko returns an array of [timestamp, price]
     const history = data.prices.map(([ts, price]) => ({
-      // .slice(0, 16) keeps YYYY-MM-DD HH:mm
-      date: new Date(ts).toISOString().replace('T', ' ').slice(0, 16), 
+      date: new Date(ts).toISOString().slice(0, 10),
       price
     }));
 
     res.json({
       source: 'CoinGecko',
       currency: 'USD',
+      range: { start: startDate, end },
       bpi: history
     });
   } catch (err) {
@@ -73,6 +79,7 @@ app.get('/history', async (req, res) => {
   }
 });
 
+// Optional: root explicitly serves index.html (helps if someone visits `/`)
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
@@ -80,3 +87,4 @@ app.get('/', (req, res) => {
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on port ${PORT}`);
 });
+
