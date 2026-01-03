@@ -9,10 +9,8 @@ function formatDateTime(ts) {
 
 function formatDateShort(ts) {
   const d = new Date(ts);
-  const pad = (n) => String(n).padStart(2, '0');
-  const month = pad(d.getMonth() + 1);
-  const day = pad(d.getDate());
-  return `${month}/${day}`;
+  const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  return `${monthNames[d.getMonth()]} ${d.getDate()}`;
 }
 
 function renderTable(rows) {
@@ -53,9 +51,9 @@ function renderChart(labels, prices, chartLabel, isShortFormat = false) {
     return;
   }
   
-  // Make chart taller for 30-day view to accommodate all labels
+  // Make chart even taller for 30-day view
   if (isShortFormat) {
-    canvas.style.height = '500px';
+    canvas.style.height = '550px';
   } else {
     canvas.style.height = '400px';
   }
@@ -95,10 +93,10 @@ function renderChart(labels, prices, chartLabel, isShortFormat = false) {
       maintainAspectRatio: false,
       layout: {
         padding: {
-          left: 20,
-          right: 20,
+          left: 10,
+          right: 10,
           top: 20,
-          bottom: 20
+          bottom: isShortFormat ? 40 : 20
         }
       },
       interaction: {
@@ -157,31 +155,33 @@ function renderChart(labels, prices, chartLabel, isShortFormat = false) {
         x: { 
           title: { 
             display: true, 
-            text: isShortFormat ? 'Date (MM/DD)' : 'Date/Time',
+            text: isShortFormat ? 'Date' : 'Date/Time',
             font: {
               size: 20,
               weight: 'bold'
             },
             color: '#000',
-            padding: { top: 20, bottom: 10 }
+            padding: { top: 15, bottom: 5 }
           },
           ticks: {
             font: {
-              size: 16,
+              size: isShortFormat ? 18 : 14,
               weight: 'bold'
             },
             minRotation: 0,
             maxRotation: 0,
             color: '#000',
             autoSkip: true,
-            autoSkipPadding: 30,
-            maxTicksLimit: isShortFormat ? 8 : 15,
-            padding: 10
+            autoSkipPadding: isShortFormat ? 50 : 20,
+            maxTicksLimit: isShortFormat ? 6 : 15,
+            padding: 12
           },
           grid: {
             display: true,
             color: 'rgba(0, 0, 0, 0.1)',
-            lineWidth: 1
+            lineWidth: 1,
+            drawTicks: true,
+            tickLength: 8
           }
         },
         y: { 
@@ -193,7 +193,7 @@ function renderChart(labels, prices, chartLabel, isShortFormat = false) {
               weight: 'bold'
             },
             color: '#000',
-            padding: { left: 10, right: 20 }
+            padding: { left: 10, right: 15 }
           },
           ticks: {
             font: {
@@ -202,8 +202,6 @@ function renderChart(labels, prices, chartLabel, isShortFormat = false) {
             },
             color: '#000',
             padding: 15,
-            stepSize: undefined,
-            count: 8,
             callback: function(value) {
               return '$' + value.toLocaleString('en-US', {
                 minimumFractionDigits: 0,
