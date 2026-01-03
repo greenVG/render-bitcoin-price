@@ -65,8 +65,8 @@ function renderChart(labels, prices, chartLabel) {
         backgroundColor: 'rgba(0,115,230,0.2)',
         fill: true,
         tension: 0.3,
-        pointRadius: 4,
-        pointHoverRadius: 8,
+        pointRadius: 5,
+        pointHoverRadius: 10,
         pointBackgroundColor: '#0073e6',
         pointBorderColor: '#fff',
         pointBorderWidth: 2,
@@ -88,27 +88,30 @@ function renderChart(labels, prices, chartLabel) {
           display: true,
           labels: {
             font: {
-              size: 14,
+              size: 18,
               weight: 'bold'
             },
-            padding: 15
+            padding: 20,
+            color: '#000'
           }
         },
         tooltip: {
           enabled: true,
-          backgroundColor: 'rgba(0, 0, 0, 0.8)',
+          backgroundColor: 'rgba(0, 0, 0, 0.9)',
           titleColor: '#fff',
           bodyColor: '#fff',
           titleFont: {
-            size: 14,
-            weight: 'bold'
-          },
-          bodyFont: {
             size: 16,
             weight: 'bold'
           },
-          padding: 12,
+          bodyFont: {
+            size: 20,
+            weight: 'bold'
+          },
+          padding: 15,
           displayColors: true,
+          borderColor: '#0073e6',
+          borderWidth: 2,
           callbacks: {
             title: (tooltipItems) => {
               return tooltipItems[0].label;
@@ -131,23 +134,28 @@ function renderChart(labels, prices, chartLabel) {
             display: true, 
             text: 'Date/Time',
             font: {
-              size: 14,
+              size: 18,
               weight: 'bold'
             },
-            padding: 10
+            color: '#000',
+            padding: 15
           },
           ticks: {
             font: {
-              size: 12
+              size: 14,
+              weight: 'bold'
             },
+            color: '#000',
             maxRotation: 45,
             minRotation: 45,
             autoSkip: true,
-            maxTicksLimit: 15
+            maxTicksLimit: 15,
+            padding: 5
           },
           grid: {
             display: true,
-            color: 'rgba(0, 0, 0, 0.05)'
+            color: 'rgba(0, 0, 0, 0.1)',
+            lineWidth: 1
           }
         },
         y: { 
@@ -155,18 +163,19 @@ function renderChart(labels, prices, chartLabel) {
             display: true, 
             text: 'Price (USD)',
             font: {
-              size: 14,
+              size: 18,
               weight: 'bold'
             },
-            padding: 10
+            color: '#000',
+            padding: 15
           },
           ticks: {
             font: {
-              size: 14,
+              size: 16,
               weight: 'bold'
             },
-            color: '#333',
-            padding: 8,
+            color: '#000',
+            padding: 10,
             callback: function(value) {
               return '$' + value.toLocaleString('en-US', {
                 minimumFractionDigits: 0,
@@ -176,8 +185,8 @@ function renderChart(labels, prices, chartLabel) {
           },
           grid: {
             display: true,
-            color: 'rgba(0, 0, 0, 0.1)',
-            lineWidth: 1
+            color: 'rgba(0, 0, 0, 0.15)',
+            lineWidth: 1.5
           }
         }
       }
