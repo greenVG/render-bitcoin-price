@@ -10,7 +10,9 @@ function formatDateTime(ts) {
 function formatDateShort(ts) {
   const d = new Date(ts);
   const pad = (n) => String(n).padStart(2, '0');
-  return `${pad(d.getMonth() + 1)}/${pad(d.getDate())}`;
+  const month = pad(d.getMonth() + 1);
+  const day = pad(d.getDate());
+  return `${month}/${day}`;
 }
 
 function renderTable(rows) {
@@ -44,7 +46,7 @@ function renderTable(rows) {
   });
 }
 
-function renderChart(labels, prices, chartLabel) {
+function renderChart(labels, prices, chartLabel, isShortFormat = false) {
   const canvas = document.getElementById('bpiChart');
   if (!canvas) {
     console.error('Canvas element not found!');
@@ -54,10 +56,15 @@ function renderChart(labels, prices, chartLabel) {
   const ctx = canvas.getContext('2d');
   if (chart) chart.destroy();
 
+  // For 30-day chart, use shorter labels to avoid crowding
+  const displayLabels = isShortFormat 
+    ? labels.map(ts => formatDateShort(new Date(ts)))
+    : labels;
+
   chart = new Chart(ctx, {
     type: 'line',
     data: {
-      labels,
+      labels: displayLabels,
       datasets: [{
         label: chartLabel,
         data: prices,
@@ -114,6 +121,10 @@ function renderChart(labels, prices, chartLabel) {
           borderWidth: 2,
           callbacks: {
             title: (tooltipItems) => {
+              // Show full date in tooltip even if X-axis uses short format
+              if (isShortFormat) {
+                return formatDateTime(labels[tooltipItems[0].dataIndex]);
+              }
               return tooltipItems[0].label;
             },
             label: (context) => {
@@ -132,7 +143,7 @@ function renderChart(labels, prices, chartLabel) {
         x: { 
           title: { 
             display: true, 
-            text: 'Date/Time',
+            text: 'Date',
             font: {
               size: 18,
               weight: 'bold'
@@ -142,15 +153,16 @@ function renderChart(labels, prices, chartLabel) {
           },
           ticks: {
             font: {
-              size: 14,
+              size: 16,
               weight: 'bold'
             },
             color: '#000',
             maxRotation: 45,
             minRotation: 45,
             autoSkip: true,
-            maxTicksLimit: 15,
-            padding: 5
+            autoSkipPadding: 20,
+            maxTicksLimit: isShortFormat ? 10 : 15,
+            padding: 8
           },
           grid: {
             display: true,
@@ -215,7 +227,7 @@ async function loadLivePrice() {
     meta.textContent = `Source: CoinGecko | Live at ${formatted} | USD`;
 
     renderTable([{ label: formatted, price }]);
-    renderChart([formatted], [price], 'BTC Price (USD) — Live');
+    renderChart([formatted], [price], 'BTC Price (USD) — Live', false);
 
   } catch (e) {
     console.error('Failed to load live price:', e);
@@ -239,6 +251,8 @@ async function loadLast30Days() {
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
 
+    // Keep original timestamps for tooltip
+    const timestamps = data.prices.map(([ts]) => ts);
     const labels = data.prices.map(([ts]) => formatDateTime(ts));
     const prices = data.prices.map(([, price]) => price);
 
@@ -252,7 +266,8 @@ async function loadLast30Days() {
     meta.textContent = `Source: CoinGecko | Range: ${start} — ${end} | USD`;
 
     renderTable(rows);
-    renderChart(labels, prices, 'BTC Price (USD) — Last 30 Days');
+    // Pass timestamps and set isShortFormat to true for 30-day chart
+    renderChart(timestamps, prices, 'BTC Price (USD) — Last 30 Days', true);
   } catch (e) {
     console.error('Failed to load 30-day history:', e);
     meta.textContent = 'Error loading history: ' + e.message;
