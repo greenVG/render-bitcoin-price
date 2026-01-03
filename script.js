@@ -1,10 +1,10 @@
-let chart; // keep reference to the chart to update/replace
+let chart;
 
 function formatDateTime(ts) {
   const d = new Date(ts);
   const pad = (n) => String(n).padStart(2, '0');
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} `
-       + `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+       + `${pad(d.getHours())}:${pad(d.getMinutes())}`; // Removed seconds for cleaner UI
 }
 
 function renderTable(rows) {
@@ -14,7 +14,6 @@ function renderTable(rows) {
 
   rows.forEach(({ label, price }) => {
     const tr = document.createElement('tr');
-
     const tdDate = document.createElement('td');
     tdDate.className = 'date-cell';
     tdDate.textContent = label;
@@ -29,7 +28,7 @@ function renderTable(rows) {
 
     tr.appendChild(tdDate);
     tr.appendChild(tdPrice);
-    tbody.appendChild(tr);
+    tbody.prepend(tr); // Newest data at the top
   });
 }
 
@@ -47,26 +46,14 @@ function renderChart(labels, prices, chartLabel) {
         borderColor: '#0073e6',
         backgroundColor: 'rgba(0,115,230,0.2)',
         fill: true,
-        tension: 0.2,
-        pointRadius: 2
+        tension: 0.1,
+        pointRadius: 0 // Cleaner look for high-density hourly data
       }]
     },
     options: {
       responsive: true,
-      plugins: {
-        legend: { display: true },
-        tooltip: {
-          callbacks: {
-            label: (ctx) => {
-              const value = ctx.parsed.y;
-              return `Price: ${Number(value).toLocaleString('en-US', { style: 'currency', currency: 'USD' })}`;
-            }
-          }
-        }
-      },
       scales: {
-        x: { title: { display: true, text: 'Date/Time' } },
-        y: { title: { display: true, text: 'Price (USD)' } }
+        x: { ticks: { maxTicksLimit: 10 } } // Prevents label crowding
       }
     }
   });
@@ -75,21 +62,17 @@ function renderChart(labels, prices, chartLabel) {
 async function loadLivePrice() {
   const meta = document.getElementById('meta');
   try {
-    const res = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd');
+    const res = await fetch('/price'); // Pointing to your backend
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
 
-    const price = data.bitcoin.usd;
-    const now = new Date();
-    const formatted = formatDateTime(now);
+    const price = data.bitcoin.USD.rate_float;
+    const formatted = formatDateTime(new Date());
 
-    meta.textContent = `Source: CoinGecko | Live at ${formatted} | USD`;
-
+    meta.textContent = `Source: ${data.source} | Live at ${formatted} | USD`;
     renderTable([{ label: formatted, price }]);
     renderChart([formatted], [price], 'BTC Price (USD) — Live');
-
   } catch (e) {
-    console.error('Failed to load live price:', e);
     meta.textContent = 'Error loading live data.';
   }
 }
@@ -97,36 +80,24 @@ async function loadLivePrice() {
 async function loadLast30Days() {
   const meta = document.getElementById('meta');
   try {
-    const res = await fetch(
-      'https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=usd&days=30&interval=hourly'
-    );
+    const res = await fetch('/history'); // Pointing to your backend
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
 
-    const labels = data.prices.map(([ts]) => formatDateTime(ts));
-    const prices = data.prices.map(([, price]) => price);
+    const labels = data.bpi.map(item => item.date);
+    const prices = data.bpi.map(item => item.price);
+    const rows = data.bpi.map(item => ({ label: item.date, price: item.price }));
 
-    const rows = data.prices.map(([ts, price]) => ({
-      label: formatDateTime(ts),
-      price
-    }));
-
-    const start = labels[0];
-    const end = labels[labels.length - 1];
-    meta.textContent = `Source: CoinGecko | Range: ${start} – ${end} | USD`;
-
+    meta.textContent = `Source: ${data.source} | Last 30 Days (Hourly Updates) | USD`;
     renderTable(rows);
-    renderChart(labels, prices, 'BTC Price (USD) — Last 30 Days (Hourly)');
+    renderChart(labels, prices, 'BTC Price (USD) — 30 Day History');
   } catch (e) {
-    console.error('Failed to load 30-day history:', e);
     meta.textContent = 'Error loading history.';
   }
 }
 
-// Wire up buttons and default view
 document.getElementById('btn-live').addEventListener('click', loadLivePrice);
 document.getElementById('btn-30d').addEventListener('click', loadLast30Days);
 
-// Load last 30 days by default
 loadLast30Days();
 
