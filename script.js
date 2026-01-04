@@ -97,12 +97,19 @@ async function loadLivePrice() {
   meta.textContent = 'Loading last 24 hours...';
   
   try {
-    // Fetch last 24 hours with hourly data points
+    // Fetch last 24 hours - CoinGecko will automatically provide multiple data points
     const res = await fetch(
-      'https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=usd&days=1&interval=hourly'
+      'https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=usd&days=1'
     );
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
+
+    // Check if we got data
+    if (!data.prices || data.prices.length === 0) {
+      throw new Error('No price data returned');
+    }
+
+    console.log(`Received ${data.prices.length} data points for last 24 hours`);
 
     const timestamps = data.prices.map(([ts]) => ts);
     const labels = data.prices.map(([ts]) => formatDateTime(ts));
@@ -115,7 +122,7 @@ async function loadLivePrice() {
 
     const start = labels[0];
     const end = labels[labels.length - 1];
-    meta.textContent = `Source: CoinGecko | Last 24 Hours: ${start} - ${end} | USD`;
+    meta.textContent = `Source: CoinGecko | Last 24 Hours (${data.prices.length} points): ${start} - ${end} | USD`;
 
     renderTable(rows);
     renderChart(timestamps, prices, 'BTC Price (USD) - Last 24 Hours', false);
