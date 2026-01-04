@@ -87,6 +87,32 @@ function renderChart(labels, prices, chartLabel, isShortFormat = false) {
   Plotly.newPlot(canvas, [trace], layout, { responsive: true });
 }
 
+async function fetchWithRetry(url, retries = 3, delay = 1000) {
+  for (let i = 0; i < retries; i++) {
+    try {
+      console.log(`Attempting to fetch (attempt ${i + 1}/${retries}): ${url}`);
+      const res = await fetch(url);
+      
+      if (!res.ok) {
+        const errorText = await res.text();
+        console.error(`HTTP ${res.status}: ${errorText}`);
+        throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+      }
+      
+      return await res.json();
+    } catch (error) {
+      console.error(`Fetch attempt ${i + 1} failed:`, error);
+      
+      if (i === retries - 1) {
+        throw error;
+      }
+      
+      // Wait before retrying
+      await new Promise(resolve => setTimeout(resolve, delay));
+    }
+  }
+}
+
 async function loadLivePrice() {
   const meta = document.getElementById('meta');
   if (!meta) {
@@ -98,18 +124,16 @@ async function loadLivePrice() {
   
   try {
     // Fetch last 24 hours - CoinGecko will automatically provide multiple data points
-    const res = await fetch(
+    const data = await fetchWithRetry(
       'https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=usd&days=1'
     );
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const data = await res.json();
 
     // Check if we got data
     if (!data.prices || data.prices.length === 0) {
-      throw new Error('No price data returned');
+      throw new Error('No price data returned from API');
     }
 
-    console.log(`Received ${data.prices.length} data points for last 24 hours`);
+    console.log(`✓ Received ${data.prices.length} data points for last 24 hours`);
 
     const timestamps = data.prices.map(([ts]) => ts);
     const labels = data.prices.map(([ts]) => formatDateTime(ts));
@@ -129,7 +153,24 @@ async function loadLivePrice() {
 
   } catch (e) {
     console.error('Failed to load 24-hour data:', e);
-    meta.textContent = 'Error loading live data: ' + e.message;
+    
+    // Provide more specific error messages
+    let errorMsg = 'Error loading live data: ';
+    if (e.message.includes('Failed to fetch')) {
+      errorMsg += 'Network error or CORS issue. Please check your internet connection or try again later.';
+    } else if (e.message.includes('429')) {
+      errorMsg += 'Rate limit exceeded. Please wait a moment and try again.';
+    } else {
+      errorMsg += e.message;
+    }
+    
+    meta.textContent = errorMsg;
+    meta.style.color = '#d13c3c';
+    
+    // Reset color after 3 seconds
+    setTimeout(() => {
+      meta.style.color = '#666';
+    }, 3000);
   }
 }
 
@@ -143,11 +184,16 @@ async function loadLast30Days() {
   meta.textContent = 'Loading last 30 days...';
   
   try {
-    const res = await fetch(
+    const data = await fetchWithRetry(
       'https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=usd&days=30&interval=daily'
     );
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const data = await res.json();
+
+    // Check if we got data
+    if (!data.prices || data.prices.length === 0) {
+      throw new Error('No price data returned from API');
+    }
+
+    console.log(`✓ Received ${data.prices.length} data points for last 30 days`);
 
     const timestamps = data.prices.map(([ts]) => ts);
     const labels = data.prices.map(([ts]) => formatDateTime(ts));
@@ -166,7 +212,22 @@ async function loadLast30Days() {
     renderChart(timestamps, prices, 'BTC Price (USD) - Last 30 Days', true);
   } catch (e) {
     console.error('Failed to load 30-day history:', e);
-    meta.textContent = 'Error loading history: ' + e.message;
+    
+    let errorMsg = 'Error loading history: ';
+    if (e.message.includes('Failed to fetch')) {
+      errorMsg += 'Network error or CORS issue. Please check your internet connection or try again later.';
+    } else if (e.message.includes('429')) {
+      errorMsg += 'Rate limit exceeded. Please wait a moment and try again.';
+    } else {
+      errorMsg += e.message;
+    }
+    
+    meta.textContent = errorMsg;
+    meta.style.color = '#d13c3c';
+    
+    setTimeout(() => {
+      meta.style.color = '#666';
+    }, 3000);
   }
 }
 
@@ -178,7 +239,8 @@ if (document.readyState === 'loading') {
 }
 
 function initApp() {
-  console.log('Initializing Bitcoin Price App...');
+  console.log('🚀 Initializing Bitcoin Price App...');
+  console.log('📊 Using CoinGecko API (Free tier: 30 calls/min)');
   
   // Wire up buttons
   const btnLive = document.getElementById('btn-live');
@@ -189,8 +251,9 @@ function initApp() {
     btn30d.addEventListener('click', loadLast30Days);
     
     // Load last 30 days by default
+    console.log('📈 Loading default view (30 days)...');
     loadLast30Days();
   } else {
-    console.error('Button elements not found!');
+    console.error('❌ Button elements not found!');
   }
 }
