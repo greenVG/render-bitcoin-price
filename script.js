@@ -1,4 +1,5 @@
-let chart; // keep reference to the chart to update/replace
+// Keep reference to chart data for updates
+let chartData = null;
 
 function formatDateTime(ts) {
   const d = new Date(ts);
@@ -50,174 +51,40 @@ function renderChart(labels, prices, chartLabel, isShortFormat = false) {
     console.error('Canvas element not found!');
     return;
   }
-  
-  // Make chart even taller for 30-day view
-  if (isShortFormat) {
-    canvas.style.height = '550px';
-  } else {
-    canvas.style.height = '400px';
-  }
-  
-  const ctx = canvas.getContext('2d');
-  if (chart) chart.destroy();
 
   // For 30-day chart, use shorter labels
   const displayLabels = isShortFormat 
     ? labels.map(ts => formatDateShort(new Date(ts)))
     : labels;
 
-  chart = new Chart(ctx, {
-    type: 'line',
-    data: {
-      labels: displayLabels,
-      datasets: [{
-        label: chartLabel,
-        data: prices,
-        borderColor: '#0073e6',
-        backgroundColor: 'rgba(0,115,230,0.2)',
-        fill: true,
-        tension: 0.3,
-        pointRadius: 5,
-        pointHoverRadius: 10,
-        pointBackgroundColor: '#0073e6',
-        pointBorderColor: '#fff',
-        pointBorderWidth: 2,
-        pointHoverBackgroundColor: '#0073e6',
-        pointHoverBorderColor: '#fff',
-        pointHoverBorderWidth: 3,
-        borderWidth: 3
-      }]
+  const trace = {
+    x: displayLabels,
+    y: prices,
+    type: 'scatter',
+    mode: 'lines+markers',
+    name: chartLabel,
+    line: { color: '#0073e6', width: 3 },
+    marker: { size: 8, color: '#0073e6' },
+    hovertemplate: 'Date: %{x}<br>Price: $%{y:.2f}<extra></extra>'
+  };
+
+  const layout = {
+    title: chartLabel,
+    xaxis: {
+      title: isShortFormat ? 'Date' : 'Date/Time',
+      tickangle: -45,
+      automargin: true
     },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      layout: {
-        padding: {
-          left: 10,
-          right: 10,
-          top: 20,
-          bottom: isShortFormat ? 40 : 20
-        }
-      },
-      interaction: {
-        mode: 'index',
-        intersect: false
-      },
-      plugins: {
-        legend: { 
-          display: true,
-          labels: {
-            font: {
-              size: 18,
-              weight: 'bold'
-            },
-            padding: 20,
-            color: '#000'
-          }
-        },
-        tooltip: {
-          enabled: true,
-          backgroundColor: 'rgba(0, 0, 0, 0.9)',
-          titleColor: '#fff',
-          bodyColor: '#fff',
-          titleFont: {
-            size: 16,
-            weight: 'bold'
-          },
-          bodyFont: {
-            size: 20,
-            weight: 'bold'
-          },
-          padding: 15,
-          displayColors: true,
-          borderColor: '#0073e6',
-          borderWidth: 2,
-          callbacks: {
-            title: (tooltipItems) => {
-              if (isShortFormat) {
-                return formatDateTime(labels[tooltipItems[0].dataIndex]);
-              }
-              return tooltipItems[0].label;
-            },
-            label: (context) => {
-              const value = context.parsed.y;
-              return `Price: ${Number(value).toLocaleString('en-US', { 
-                style: 'currency', 
-                currency: 'USD',
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2
-              })}`;
-            }
-          }
-        }
-      },
-      scales: {
-        x: { 
-          title: { 
-            display: true, 
-            text: isShortFormat ? 'Date' : 'Date/Time',
-            font: {
-              size: 20,
-              weight: 'bold'
-            },
-            color: '#000',
-            padding: { top: 15, bottom: 5 }
-          },
-          ticks: {
-            font: {
-              size: isShortFormat ? 18 : 14,
-              weight: 'bold'
-            },
-            minRotation: 0,
-            maxRotation: 0,
-            color: '#000',
-            autoSkip: true,
-            autoSkipPadding: isShortFormat ? 50 : 20,
-            maxTicksLimit: isShortFormat ? 6 : 15,
-            padding: 12
-          },
-          grid: {
-            display: true,
-            color: 'rgba(0, 0, 0, 0.1)',
-            lineWidth: 1,
-            drawTicks: true,
-            tickLength: 8
-          }
-        },
-        y: { 
-          title: { 
-            display: true, 
-            text: 'Price (USD)',
-            font: {
-              size: 20,
-              weight: 'bold'
-            },
-            color: '#000',
-            padding: { left: 10, right: 15 }
-          },
-          ticks: {
-            font: {
-              size: 18,
-              weight: 'bold'
-            },
-            color: '#000',
-            padding: 15,
-            callback: function(value) {
-              return '$' + value.toLocaleString('en-US', {
-                minimumFractionDigits: 0,
-                maximumFractionDigits: 0
-              });
-            }
-          },
-          grid: {
-            display: true,
-            color: 'rgba(0, 0, 0, 0.15)',
-            lineWidth: 1.5
-          }
-        }
-      }
-    }
-  });
+    yaxis: {
+      title: 'Price (USD)',
+      tickprefix: '$',
+      automargin: true
+    },
+    margin: { l: 70, r: 30, t: 50, b: 80 },
+    height: isShortFormat ? 550 : 400
+  };
+
+  Plotly.newPlot(canvas, [trace], layout, { responsive: true });
 }
 
 async function loadLivePrice() {
@@ -286,11 +153,10 @@ async function loadLast30Days() {
   }
 }
 
-// CRITICAL FIX: Wait for DOM to be ready before running code
+// Wait for DOM to be ready before running code
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', initApp);
 } else {
-  // DOM is already ready
   initApp();
 }
 
@@ -311,3 +177,4 @@ function initApp() {
     console.error('Button elements not found!');
   }
 }
+
