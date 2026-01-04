@@ -4,11 +4,8 @@
   <meta charset="UTF-8" />
   <title>Bitcoin Price Index</title>
   <link rel="stylesheet" href="style.css" />
-  <!-- Chart.js CDN -->
-  <!--  "https://cdn.jsdelivr.net/npm/chart.js"  -->
-
-<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-
+  <!-- Load Plotly.js -->
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 </head>
 <body>
   <div class="bpi-container">
@@ -20,7 +17,8 @@
       <button id="btn-30d">Load last 30 days</button>
     </div>
 
-    <canvas id="bpiChart"></canvas>
+    <!-- Plotly chart container -->
+    <div id="bpiChart"></div>
 
     <table class="bpi-table">
       <thead>
@@ -32,10 +30,12 @@
 
   <script src="script.js"></script>
 
-    <!-- Auxiliary Information Section (Fixed Footer) -->
-    <div id="auxiliary-info">
-        Developed by: // Sviluppato da: // Desarrollado por: <strong>Gustavo Pittaluga</strong> | E-Mail: <a href="mailto:gustavopittaluga@proton.me">gustavopittaluga@proton.me</a>
-    </div>
+  <!-- Auxiliary Information Section (Fixed Footer) -->
+  <div id="auxiliary-info">
+    Developed by: // Sviluppato da: // Desarrollado por: 
+    <strong>Gustavo Pittaluga</strong> | 
+    E-Mail: <a href="mailto:gustavopittaluga@proton.me">gustavopittaluga@proton.me</a>
+  </div>
 </body>
 </html>
 
