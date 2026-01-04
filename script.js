@@ -108,7 +108,7 @@ async function loadLivePrice() {
     meta.textContent = `Source: CoinGecko | Live at ${formatted} | USD`;
 
     renderTable([{ label: formatted, price }]);
-    renderChart([formatted], [price], 'BTC Price (USD) — Live', false);
+    renderChart([formatted], [price], 'BTC Price (USD) - Live', false);
 
   } catch (e) {
     console.error('Failed to load live price:', e);
@@ -143,10 +143,10 @@ async function loadLast30Days() {
 
     const start = labels[0];
     const end = labels[labels.length - 1];
-    meta.textContent = `Source: CoinGecko | Range: ${start} — ${end} | USD`;
+    meta.textContent = `Source: CoinGecko | Range: ${start} - ${end} | USD`;
 
     renderTable(rows);
-    renderChart(timestamps, prices, 'BTC Price (USD) — Last 30 Days', true);
+    renderChart(timestamps, prices, 'BTC Price (USD) - Last 30 Days', true);
   } catch (e) {
     console.error('Failed to load 30-day history:', e);
     meta.textContent = 'Error loading history: ' + e.message;
@@ -177,4 +177,3 @@ function initApp() {
     console.error('Button elements not found!');
   }
 }
-
