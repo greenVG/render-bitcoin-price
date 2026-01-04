@@ -94,24 +94,34 @@ async function loadLivePrice() {
     return;
   }
   
-  meta.textContent = 'Loading live price...';
+  meta.textContent = 'Loading last 24 hours...';
   
   try {
-    const res = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd');
+    // Fetch last 24 hours with hourly data points
+    const res = await fetch(
+      'https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=usd&days=1&interval=hourly'
+    );
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
 
-    const price = data.bitcoin.usd;
-    const now = new Date();
-    const formatted = formatDateTime(now);
+    const timestamps = data.prices.map(([ts]) => ts);
+    const labels = data.prices.map(([ts]) => formatDateTime(ts));
+    const prices = data.prices.map(([, price]) => price);
 
-    meta.textContent = `Source: CoinGecko | Live at ${formatted} | USD`;
+    const rows = data.prices.map(([ts, price]) => ({
+      label: formatDateTime(ts),
+      price
+    }));
 
-    renderTable([{ label: formatted, price }]);
-    renderChart([formatted], [price], 'BTC Price (USD) - Live', false);
+    const start = labels[0];
+    const end = labels[labels.length - 1];
+    meta.textContent = `Source: CoinGecko | Last 24 Hours: ${start} - ${end} | USD`;
+
+    renderTable(rows);
+    renderChart(timestamps, prices, 'BTC Price (USD) - Last 24 Hours', false);
 
   } catch (e) {
-    console.error('Failed to load live price:', e);
+    console.error('Failed to load 24-hour data:', e);
     meta.textContent = 'Error loading live data: ' + e.message;
   }
 }
